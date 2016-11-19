@@ -35,6 +35,7 @@ import org.nd4j.linalg.api.complex.IComplexDouble;
 import org.nd4j.linalg.api.complex.IComplexFloat;
 import org.nd4j.linalg.api.complex.IComplexNumber;
 import org.nd4j.linalg.api.ndarray.INDArray;
+import org.nd4j.linalg.exception.ND4JIllegalStateException;
 import org.nd4j.linalg.factory.Nd4j;
 import org.nd4j.linalg.jcublas.context.ContextHolder;
 import org.nd4j.linalg.jcublas.context.CudaContext;
@@ -608,17 +609,26 @@ public abstract class BaseCudaDataBuffer extends BaseDataBuffer implements JCuda
 
     @Override
     public void write(DataOutputStream out) throws IOException {
+        if (length() == 12270 || length() == 12544) {
+            log.info("Saving {} elements...", length());
+        }
         allocator.synchronizeHostData(this);
         super.write(out);
     }
 
     @Override
     public void write(OutputStream dos)  {
+        if (length() == 12270 || length() == 12544) {
+            log.info("Saving {} elements...", length());
+        }
         allocator.synchronizeHostData(this);
         super.write(dos);
     }
 
     private void writeObject(java.io.ObjectOutputStream stream) throws IOException {
+        if (length() == 12270 || length() == 12544) {
+            log.info("Saving {} elements...", length());
+        }
         allocator.synchronizeHostData(this);
         stream.defaultWriteObject();
         write(stream);
@@ -672,6 +682,7 @@ public abstract class BaseCudaDataBuffer extends BaseDataBuffer implements JCuda
 
     @Override
     public void read(DataInputStream s) {
+        int i = 0;
         try {
 //            log.info("Restoring CUDA databuffer");
             // skip allocationMode
@@ -706,7 +717,7 @@ public abstract class BaseCudaDataBuffer extends BaseDataBuffer implements JCuda
 
                 int[] array = new int[(int) length];
 
-                for (int i = 0; i < length(); i++) {
+                for (i = 0; i < length(); i++) {
                     if (t == Type.INT)
                         array[i] = s.readInt();
                     else if (t == Type.DOUBLE)
@@ -729,7 +740,7 @@ public abstract class BaseCudaDataBuffer extends BaseDataBuffer implements JCuda
 
                 double[] array = new double[(int) length];
 
-                for(int i = 0; i < length(); i++) {
+                for(i = 0; i < length(); i++) {
                     if (t == Type.INT)
                         array[i] = (double) s.readInt();
                     else if (t == Type.DOUBLE)
@@ -752,7 +763,7 @@ public abstract class BaseCudaDataBuffer extends BaseDataBuffer implements JCuda
 
                 float[] array = new float[(int) length];
 
-                for(int i = 0; i < length(); i++) {
+                for(i = 0; i < length(); i++) {
                     if (t == Type.INT)
                         array[i] = (float) s.readInt();
                     else if (t == Type.DOUBLE)
@@ -773,9 +784,7 @@ public abstract class BaseCudaDataBuffer extends BaseDataBuffer implements JCuda
                 this.pointer = new CudaPointer(allocationPoint.getPointers().getHostPointer(), length).asShortPointer();
                 indexer = HalfIndexer.create((ShortPointer) this.pointer);
 
-                short[] array = new short[(int) length];
-
-                for (int i = 0; i < length; i++) {
+                for (i = 0; i < length; i++) {
 
                     if (t == Type.INT)
                     ((HalfIndexer) indexer).put(i, (float) s.readInt());
@@ -789,44 +798,6 @@ public abstract class BaseCudaDataBuffer extends BaseDataBuffer implements JCuda
                 }
 
                 AllocationPoint pointDst = allocationPoint;
-
-                // now, easiest approach is conversion from float buffer to halfs buffer
-                // FIXME: this worth reimplementing as direct Half-allocation, instead of temporary array creation
-/*
-                ((HalfIndexer) indexer).pu
-
-                log.info("Restored array: {}", Arrays.toString(array));
-                CudaFloatDataBuffer tempBuffer = new CudaFloatDataBuffer(array);
-
-
-
-                log.info("Restored buffer: {}", tempBuffer);
-                */
-/*
-                AtomicAllocator allocator = AtomicAllocator.getInstance();
-
-                AllocationPoint pointSrc = allocator.getAllocationPoint(tempBuffer);
-
-
-                CudaContext context =  allocator.getFlowController().prepareAction(pointDst, pointSrc);
-
-                PointerPointer extras = new PointerPointer(
-                        null, // not used for conversion
-                        context.getOldStream(),
-                        AtomicAllocator.getInstance().getDeviceIdPointer());
-*/
-                //Pointer x = AtomicAllocator.getInstance().getPointer(tempBuffer, context);
-                //Pointer z = AtomicAllocator.getInstance().getPointer(this, context);
-/*
-                log.info("temp length: {}", tempBuffer.length);
-                log.info("this length: {}", length);
-
-                //FIXME: get this back
-                Nd4j.getNDArrayFactory().convertDataEx(TypeEx.FLOAT, tempBuffer, TypeEx.FLOAT16, this);
-                //NativeOpsHolder.getInstance().getDeviceNativeOps().convertFloatsToHalfs(extras, x, (int) length, z);
-
-              //  allocator.getFlowController().registerAction(context, pointDst, pointSrc);;
-  */
                 pointDst.tickHostWrite();
             }
             else throw new IllegalStateException("Unknown dataType: ["+ t.toString()+"]");
@@ -836,6 +807,7 @@ public abstract class BaseCudaDataBuffer extends BaseDataBuffer implements JCuda
 
             //      log.info("wrappedBuffer: length: ["+ wrappedBuffer.capacity()+"]");
         } catch (Exception e) {
+            log.error("Got exception on i: [{}] of length: [{}]", i, length);
             throw new RuntimeException(e);
         }
 
