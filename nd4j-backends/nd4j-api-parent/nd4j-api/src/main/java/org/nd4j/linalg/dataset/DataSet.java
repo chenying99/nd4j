@@ -415,8 +415,8 @@ public class DataSet implements org.nd4j.linalg.dataset.api.DataSet {
 
     @Override
     public void load(File from) {
-        try{
-            load(new FileInputStream(from));
+        try(BufferedInputStream bis = new BufferedInputStream(new FileInputStream(from))){
+            load(bis);
         }catch(IOException e){
             throw new RuntimeException(e);
         }
@@ -459,8 +459,8 @@ public class DataSet implements org.nd4j.linalg.dataset.api.DataSet {
 
     @Override
     public void save(File to) {
-        try{
-            save(new FileOutputStream(to,false));
+        try(BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(to, false))){
+            save(bos);
         }catch(IOException e){
             throw new RuntimeException(e);
         }

@@ -609,26 +609,17 @@ public abstract class BaseCudaDataBuffer extends BaseDataBuffer implements JCuda
 
     @Override
     public void write(DataOutputStream out) throws IOException {
-        if (length() == 12270 || length() == 12544) {
-            log.info("Saving {} elements...", length());
-        }
         allocator.synchronizeHostData(this);
         super.write(out);
     }
 
     @Override
     public void write(OutputStream dos)  {
-        if (length() == 12270 || length() == 12544) {
-            log.info("Saving {} elements...", length());
-        }
         allocator.synchronizeHostData(this);
         super.write(dos);
     }
 
     private void writeObject(java.io.ObjectOutputStream stream) throws IOException {
-        if (length() == 12270 || length() == 12544) {
-            log.info("Saving {} elements...", length());
-        }
         allocator.synchronizeHostData(this);
         stream.defaultWriteObject();
         write(stream);
@@ -761,6 +752,7 @@ public abstract class BaseCudaDataBuffer extends BaseDataBuffer implements JCuda
                 this.pointer = new CudaPointer(allocationPoint.getPointers().getHostPointer(), length).asFloatPointer();
                 indexer = FloatIndexer.create((FloatPointer) pointer);
 
+
                 float[] array = new float[(int) length];
 
                 for(i = 0; i < length(); i++) {
@@ -774,7 +766,8 @@ public abstract class BaseCudaDataBuffer extends BaseDataBuffer implements JCuda
                         array[i] = toFloat((int) s.readShort());
                     }
                 }
-    //            log.info("Array type: {}, Restored array: {}", t, Arrays.toString(array));
+
+                //            log.info("Array type: {}, Restored array: {}", t, Arrays.toString(array));
                 setData(array);
             } else if (globalType == Type.HALF) {
                 this.elementSize = 2;
@@ -810,7 +803,6 @@ public abstract class BaseCudaDataBuffer extends BaseDataBuffer implements JCuda
             log.error("Got exception on i: [{}] of length: [{}]", i, length);
             throw new RuntimeException(e);
         }
-
         allocator.synchronizeHostData(this);
     }
 

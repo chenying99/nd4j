@@ -23,6 +23,7 @@ import org.nd4j.linalg.indexing.conditions.Conditions;
 import org.nd4j.linalg.jcublas.ops.executioner.CudaGridExecutioner;
 import org.nd4j.linalg.util.DeviceLocalNDArray;
 
+import java.io.File;
 import java.util.*;
 
 import static org.junit.Assert.assertArrayEquals;
@@ -513,5 +514,26 @@ public class SporadicTests {
 
         System.out.println("Expected: " + Arrays.toString(exp));
         System.out.println("Actual:   " + Arrays.toString(arr.sum(1).data().asDouble()));
+    }
+
+    @Test
+    public void testDataSetSerialization1() throws Exception {
+        INDArray features = Nd4j.linspace(1, 784 * 16, 784 * 16).reshape(16, 784);
+        INDArray labels = Nd4j.linspace(1, 160, 160).reshape(16, 10);
+
+        for (int i = 0; i < 1000; i++) {
+            DataSet ds = new DataSet(features, labels);
+
+            File tmpFile = File.createTempFile("dataset","temp");
+            tmpFile.deleteOnExit();
+
+            ds.save(tmpFile);
+
+            DataSet restore = new DataSet();
+            restore.load(tmpFile);
+
+            assertEquals(features, restore.getFeatureMatrix());
+            assertEquals(labels, restore.getLabels());
+        }
     }
 }
