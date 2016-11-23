@@ -22,19 +22,12 @@ import org.slf4j.LoggerFactory;
  * op execution on cpu
  * @author Adam Gibson
  */
-@Platform(include = "NativeOps.h", compiler = "cpp11", link = "nd4j", library = "jnind4j")
+@Platform(include = "NativeOps.h", compiler = "cpp11", link = "nd4j", preload = "libnd4j", library = "jnind4j")
 public class NativeOps extends Pointer {
     private static Logger log = LoggerFactory.getLogger(NativeOps.class);
     static {
-        // using our custom platform properties from resources, and on user request,
-        // load in priority libraries found in the library path over bundled ones
-        String platform = Loader.getPlatform();
-        Properties properties = Loader.loadProperties(platform + "-nd4j", platform);
-        properties.remove("platform.preloadpath");
-        String s = System.getProperty("org.nd4j.nativeblas.pathsfirst", "false").toLowerCase();
-        boolean pathsFirst = s.equals("true") || s.equals("t") || s.equals("");
         try {
-            Loader.load(NativeOps.class, properties, pathsFirst);
+            Loader.load(NativeOps.class);
         } catch (UnsatisfiedLinkError e) {
             throw new RuntimeException("ND4J is probably missing dependencies. For more information, please refer to: http://nd4j.org/getstarted.html", e);
         }
@@ -1236,13 +1229,9 @@ public class NativeOps extends Pointer {
 
     public native Pointer createEvent();
 
-    public native Pointer createBlasHandle();
-
     public native int registerEvent(Pointer event, Pointer stream);
 
     public native int destroyEvent(Pointer event);
-
-    public native int setBlasStream(Pointer handle, Pointer stream);
 
     public native int setDevice(Pointer ptrToDeviceId);
 
